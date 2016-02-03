@@ -19,6 +19,8 @@ typedef struct _threeDimVec {
     double z;
 } threeDimVec;
 
+threeDimVec addThreeDimVec(const void*,const void*);
+
 //parallel scan
 void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     
