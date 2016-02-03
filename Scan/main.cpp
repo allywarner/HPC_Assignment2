@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <cstring>
 #include <iterator>
+#include <sstream>
 
 using namespace std;
 void seqScan(void*,size_t,size_t);
@@ -24,17 +25,51 @@ typedef struct _threeDimVec {
 
 threeDimVec addThreeDimVec(const void*,const void*);
 
+//printing stuffs
+
+double testArray[] = {3.2,5.4,1.2,7.7,2.3,6.9};
+//answer: {3.2,8.6,9.8,17.5,19.8,26.7}
+
+void printDoubles()
+{
+    int threadID = omp_get_thread_num();
+    for (double d : testArray)
+        printf("thread id: %d value: %f\n", threadID, d);
+}
+
+void printNewArray(const char* newArray, size_t size)
+{
+    ostringstream ostr;
+    ostr << "newArray: ";
+    for (int i = 0; i < size; ++i)
+    {
+        double x;
+        memcpy(&x, newArray + i*sizeof(double), sizeof(double));
+        ostr << x << ", ";
+    }
+    ostr << "\n";
+    cout << ostr.str();
+}
+
 //parallel scan
 void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     
-    int processes = omp_get_num_threads();
+    int processes = 0;
+    
+#pragma omp parallel
+    processes = omp_get_num_threads();
+    
+    printf("processes: %d\n", processes);
     
     if (arraySize <= processes) {
+        //printDoubles();
         seqScan(arrayBase,arraySize,elementSize);
+        //printDoubles();
         return;
     }
     
     char *newArray = new char[processes*elementSize];
+    //printDoubles();
     
 //up sweep
 #pragma omp parallel
@@ -44,14 +79,25 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
         int start = (threadID * arraySize)/processes;
         int end = ((threadID+1)*arraySize)/processes;
         
+        printf("thread id: %d start: %d\n", threadID, start);
+        printf("thread id: %d end: %d\n", threadID, end);
+        
         char* arrayBaseChar = (char*)arrayBase;
         
         seqScan(arrayBaseChar+start*elementSize,end,elementSize);
         
         memcpy(newArray+threadID,arrayBaseChar+(end-1)*elementSize,elementSize);
-        
-        genericScan(newArray,threadID,elementSize);
     }
+
+#pragma omp barrier
+    //genericScan(newArray,processes,elementSize);
+    seqScan(newArray,processes, elementSize);
+    
+    cout << "after seqscan" << endl;
+    
+    printNewArray(newArray,processes);
+    //printDoubles();
+
     
 //down sweep
 #pragma omp parallel
@@ -121,11 +167,11 @@ double addDouble(const void* a, const void* b){
 }
 
 int main(int argc, char* argv[]){
-    
-    double testArray[] = {3.2,5.4,1.2,7.7,2.3,6.9};
-    //answer: {3.2,8.6,9.8,17.5,19.8,26.7}
-    
-    genericScan(testArray, sizeof(testArray)/sizeof(double),sizeof(double));
-    copy(testArray, testArray + 6, ostream_iterator<double>(cout, " "));
-    
+//    
+//    double testArray[] = {3.2,5.4,1.2,7.7,2.3,6.9};
+//    //answer: {3.2,8.6,9.8,17.5,19.8,26.7}
+//    
+      genericScan(testArray, sizeof(testArray)/sizeof(double),sizeof(double));
+      copy(testArray, testArray + 6, ostream_iterator<double>(cout, " "));
+//    
 }
