@@ -28,12 +28,12 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     if (arraySize <= processes) {
         seqScan(arrayBase,arraySize,elementSize);
     }
+    int *newArray = new int[processes];
     
     //up sweep
 #pragma omp parallel
     {
         int threadID = omp_get_thread_num();
-        int *newArray = new int[processes];
         int start = (threadID * arraySize)/(processes-1);
         int end = ((threadID+1)*arraySize)/processes;
         
