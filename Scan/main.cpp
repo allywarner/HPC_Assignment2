@@ -107,4 +107,10 @@ double addDouble(const void* a, const void* b){
 
 int main(int argc, char* argv[]){
     
+    double *testArray = new double
+    
+    
+    
+    
+    
 }
