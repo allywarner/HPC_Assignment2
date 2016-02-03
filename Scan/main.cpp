@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstring>
+#include <iterator>
 
 using namespace std;
 void seqScan(void*,size_t,size_t);
@@ -98,19 +99,22 @@ threeDimVec addThreeDimVec(const void* a, const void* b){
 
 //double one dimensional vector addition
 double addDouble(const void* a, const void* b){
-    double a = *(double *)a;
-    double b = *(double *)b;
-    double addedDouble = a + b;
+    double d1 = *(double *)a;
+    double d2 = *(double *)b;
+    double addedDouble = d1 + d2;
     
     return addedDouble;
 }
 
 int main(int argc, char* argv[]){
     
-    double *testArray = new double
+    double testArray[] = {3.2,5.4,1.2,7.7,2.3,6.9};
+    //answer: {3.2,8.6,9.8,17.5,19.8,26.7}
     
+    genericScan(testArray, sizeof(testArray)/sizeof(double),sizeof(double));
+    copy(testArray, testArray + 6, ostream_iterator<double>(cout, " "));
     
-    
+
     
     
 }
