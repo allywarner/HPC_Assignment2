@@ -30,13 +30,17 @@ struct threeDimVec {
 threeDimVec addThreeDimVec(const void*,const void*);
 
 //parallel scan
+//Inputs: a pointer that points to the first element of the array, the size of the array, and the size of the datatype of that array.
+//Computes a prefix sum in parallel
 void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     
     int processes = 0;
     
 #pragma omp parallel
+    
     processes = omp_get_num_threads();
     
+    //If the array size is less than the processes available, just do sequential scan.
     if (arraySize <= processes) {
         seqScan(arrayBase,arraySize,elementSize);
         return;
@@ -44,36 +48,42 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     
     char *newArray = new char[processes*elementSize];
     
-//up sweep
+//up sweep in parallel
 #pragma omp parallel
     {
         int threadID = omp_get_thread_num();
         
+        //breaking up array into pieces
         int start = (threadID * arraySize)/processes;
         int end = ((threadID+1)*arraySize)/processes;
         
         char* arrayBaseChar = (char*)arrayBase;
         
+        //sequential scan on those pieces
         seqScan(arrayBaseChar+start*elementSize,end-start,elementSize);
         
+        //moving the largest values of each piece into a new array
         memcpy(newArray+(threadID*elementSize),arrayBaseChar+(end-1)*elementSize,elementSize);
     }
 
-//recursive call for scan
+//recursive call for scan on the new array, we want to wait until newArray is full (barrier)
 #pragma omp barrier
     genericScan(newArray,processes,elementSize);
     
-//down sweep
+//down sweep in parallel
 #pragma omp parallel
     {
         int threadID = omp_get_thread_num();
         
+        //we don't want threadID 0 to do calculations because that part of the array is done
         if (threadID != 0){
             char* arrayBaseChar = (char*)arrayBase;
             
+            //breaking up the array into pieces
             int start = ((threadID)*arraySize)/processes;
             int end = ((threadID+1)*arraySize)/processes;
             
+            //update the the pieces with the max value of the piece before it (except for the last piece)
             for (int i = start; i < end; i++) {
                 if(elementSize == sizeof(threeDimVec)){
                     *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
@@ -89,10 +99,13 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
 }
 
 //sequential scan
+////Inputs: a pointer that points to the first element of the array, the size of the array, and the size of the datatype of that array.
+//Computes a prefix sum sequentially
 void seqScan(void* arrayBase, size_t arraySize,size_t elementSize){
     
     char* arrayBaseChar = (char*)arrayBase;
     
+    //calculates by adding the element before to the current element
     for (int i = 1; i < arraySize; i++) {
         if(elementSize == sizeof(threeDimVec)){
             *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
@@ -112,6 +125,8 @@ threeDimVec randThreeDimVec(){
 }
 
 //three dimensional vector addition
+//Inputs: two three dimensional arrays
+//Outpus: added three dimensional array
 threeDimVec addThreeDimVec(const void* a, const void* b){
     threeDimVec vec1 = *(threeDimVec *)a;
     threeDimVec vec2 = *(threeDimVec *)b;
@@ -124,6 +139,8 @@ threeDimVec addThreeDimVec(const void* a, const void* b){
 }
 
 //double one dimensional vector addition
+//Inputs: two 1D arrays
+//Outputs: added 1D arrays
 double addDouble(const void* a, const void* b){
     double d1 = *(double *)a;
     double d2 = *(double *)b;
@@ -132,6 +149,8 @@ double addDouble(const void* a, const void* b){
     return addedDouble;
 }
 
+//checking if 1D vectors are equal
+//Inputs: two 1D VECTORS
 bool checkScanDouble(const vector<double>& vector1, const vector<double>& vector2)
 {
     if (vector1.size() != vector2.size())
@@ -145,6 +164,8 @@ bool checkScanDouble(const vector<double>& vector1, const vector<double>& vector
     return true;
 }
 
+//checking if 3D vectors are equal
+//Inputs: two 3D VECTORS
 bool checkScanThreeDimVec(const vector<threeDimVec>& vector1, const vector<threeDimVec>& vector2)
 {
     if (vector1.size() != vector2.size())
@@ -163,6 +184,7 @@ bool checkScanThreeDimVec(const vector<threeDimVec>& vector1, const vector<three
 }
 
 //MAIN FUNCTION
+//Inputs: length of an array and datatype (optional), defaults to 1D array of doubles.
 int main(int argc, char* argv[]){
     
     double time = 0;
