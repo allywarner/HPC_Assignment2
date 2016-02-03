@@ -114,7 +114,4 @@ int main(int argc, char* argv[]){
     genericScan(testArray, sizeof(testArray)/sizeof(double),sizeof(double));
     copy(testArray, testArray + 6, ostream_iterator<double>(cout, " "));
     
-
-    
-    
 }
