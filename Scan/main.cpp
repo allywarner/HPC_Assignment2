@@ -86,6 +86,8 @@ threeDimVec addThreeDimVec(const void* a, const void* b){
     addedVec[1] = vec1.x + vec2.x;
     addedVec[2] = vec1.y + vec2.y;
     addedVec[3] = vec1.z + vec2.z;
+    
+    return addedVec;
 }
 
 int main(int argc, char* argv[]){
