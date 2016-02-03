@@ -90,8 +90,8 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     }
 
 #pragma omp barrier
-    //genericScan(newArray,processes,elementSize);
-    seqScan(newArray,processes,elementSize);
+    genericScan(newArray,processes,elementSize);
+    //seqScan(newArray,processes,elementSize);
     
     cout << "after seqscan" << endl;
     
