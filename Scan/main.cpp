@@ -28,7 +28,7 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     if (arraySize <= processes) {
         seqScan(arrayBase,arraySize,elementSize);
     }
-    int *newArray = new int[processes];
+    char *newArray = new char[processes*elementSize];
     
     //up sweep
 #pragma omp parallel
@@ -40,15 +40,18 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
         char* arrayBaseChar = (char*)arrayBase;
         
         seqScan(arrayBaseChar + start*elementSize, end,elementSize);
-        newArray[threadID] = arrayBase[end];
+        memcpy(newArray + threadID,arrayBaseChar+end, elementSize);
+        //newArray[threadID] = arrayBase[end];
+        genericScan(newArray,threadID,elementSize);
     }
-    
-    genericScan(newArray,threadID,elementSize);
     
     //down sweep
 #pragma omp parallel
     {
         int threadID = omp_get_thread_num();
+        //not sure if this is right... don't want to double add
+        int start = (threadID * arraySize)/(processes-1);
+        int end = ((threadID+1)*arraySize)/processes;
         for (int i = start; i < end; i++) {
             if(elementSize == threeDimVec){
                 *((threeDimVec*)(arrayBase[i])) = addThreeDimVec(arrayBase[i],NewArray[threadID-1]);
