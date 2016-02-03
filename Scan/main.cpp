@@ -8,6 +8,7 @@
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cstring>
 
 using namespace std;
 void seqScan(void*,size_t,size_t);
@@ -41,7 +42,6 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
         
         seqScan(arrayBaseChar + start*elementSize, end,elementSize);
         memcpy(newArray + threadID,arrayBaseChar+end, elementSize);
-        //newArray[threadID] = arrayBase[end];
         genericScan(newArray,threadID,elementSize);
     }
     
@@ -49,15 +49,15 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
 #pragma omp parallel
     {
         int threadID = omp_get_thread_num();
+        char* arrayBaseChar = (char*)arrayBase;
         //not sure if this is right... don't want to double add
         int start = (threadID * arraySize)/(processes-1);
         int end = ((threadID+1)*arraySize)/processes;
         for (int i = start; i < end; i++) {
-            if(elementSize == threeDimVec){
-                *((threeDimVec*)(arrayBase[i])) = addThreeDimVec(arrayBase[i],NewArray[threadID-1]);
+            if(elementSize == sizeof(threeDimVec)){
+                *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
             } else {
-                char* arrayBaseChar = (char*)arrayBase;
-                arrayBase[i] = arrayBase[i] + newArray[threadID-1];
+                arrayBaseChar+i*elementSize = arrayBaseChar+i*elementSize + newArray+(threadID-1)*elementSize;
             }
         }
     }
@@ -66,11 +66,11 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
 
 //sequential scan
 void seqScan(void* arrayBase, size_t arraySize,size_t elementSize){
+    char* arrayBaseChar = (char*)arrayBase;
     for (int i = 1; i < arraySize - 1; i++) {
         if(elementSize == threeDimVec){
-            *((threeDimVec*)(arrayBase[i])) = addThreeDimVec(arrayBase[i],arrayBase[i-1]);
+            *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
         } else {
-            char* arrayBaseChar = (char*)arrayBase;
             arrayBase[i] = arrayBase[i] + arrayBase[i-1];
         }
     }
