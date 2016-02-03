@@ -11,45 +11,23 @@
 #include <cstring>
 #include <iterator>
 #include <sstream>
+#include <time.h>
+#include <ctime>
+#include <vector>
+#include <cmath>
 
 using namespace std;
 void seqScan(void*,size_t,size_t);
 double addDouble(const void*, const void*);
 
 //three dimensional percision vector
-typedef struct _threeDimVec {
+struct threeDimVec {
     double x;
     double y;
     double z;
-} threeDimVec;
+};
 
 threeDimVec addThreeDimVec(const void*,const void*);
-
-//printing stuffs
-
-double testArray[] = {3.2,5.4,1.2,7.7,2.3,6.9};
-//answer: {3.2,8.6,9.8,17.5,19.8,26.7}
-
-void printDoubles()
-{
-    int threadID = omp_get_thread_num();
-    for (double d : testArray)
-        printf("thread id: %d value: %f\n", threadID, d);
-}
-
-void printNewArray(const char* newArray, size_t size)
-{
-    ostringstream ostr;
-    ostr << "newArray: ";
-    for (int i = 0; i < size; ++i)
-    {
-        double x;
-        memcpy(&x, newArray + i*sizeof(double), sizeof(double));
-        ostr << x << ", ";
-    }
-    ostr << "\n";
-    cout << ostr.str();
-}
 
 //parallel scan
 void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
@@ -59,17 +37,12 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
 #pragma omp parallel
     processes = omp_get_num_threads();
     
-    printf("processes: %d\n", processes);
-    
     if (arraySize <= processes) {
-        //printDoubles();
         seqScan(arrayBase,arraySize,elementSize);
-        //printDoubles();
         return;
     }
     
     char *newArray = new char[processes*elementSize];
-    //printDoubles();
     
 //up sweep
 #pragma omp parallel
@@ -79,9 +52,6 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
         int start = (threadID * arraySize)/processes;
         int end = ((threadID+1)*arraySize)/processes;
         
-        printf("thread id: %d start: %d\n", threadID, start);
-        printf("thread id: %d end: %d\n", threadID, end);
-        
         char* arrayBaseChar = (char*)arrayBase;
         
         seqScan(arrayBaseChar+start*elementSize,end-start,elementSize);
@@ -89,15 +59,9 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
         memcpy(newArray+(threadID*elementSize),arrayBaseChar+(end-1)*elementSize,elementSize);
     }
 
+//recursive call for scan
 #pragma omp barrier
     genericScan(newArray,processes,elementSize);
-    //seqScan(newArray,processes,elementSize);
-    
-    cout << "after seqscan" << endl;
-    
-    printNewArray(newArray,processes);
-    //printDoubles();
-
     
 //down sweep
 #pragma omp parallel
@@ -143,6 +107,8 @@ threeDimVec randThreeDimVec(){
     double x = ((double)rand())/RAND_MAX;
     double y = ((double)rand())/RAND_MAX;
     double z = ((double)rand())/RAND_MAX;
+    
+    return {x,y,z};
 }
 
 //three dimensional vector addition
@@ -166,12 +132,99 @@ double addDouble(const void* a, const void* b){
     return addedDouble;
 }
 
+bool checkScanDouble(const vector<double>& vector1, const vector<double>& vector2)
+{
+    if (vector1.size() != vector2.size())
+        return false;
+    
+    for (int i = 0; i < vector1.size(); ++i)
+    {
+        if (fabs(vector1[i] - vector2[i]) > 0.0000001)
+            return false;
+    }
+    return true;
+}
+
+bool checkScanThreeDimVec(const vector<threeDimVec>& vector1, const vector<threeDimVec>& vector2)
+{
+    if (vector1.size() != vector2.size())
+        return false;
+    
+    for (int i = 0; i < vector1.size(); ++i)
+    {
+        if (fabs(vector1[i].x - vector2[i].x) > 0.0000001)
+            return false;
+        if (fabs(vector1[i].y - vector2[i].y) > 0.0000001)
+            return false;
+        if (fabs(vector1[i].z - vector2[i].z) > 0.0000001)
+            return false;
+    }
+    return true;
+}
+
+//MAIN FUNCTION
 int main(int argc, char* argv[]){
-//    
-//    double testArray[] = {3.2,5.4,1.2,7.7,2.3,6.9};
-//    //answer: {3.2,8.6,9.8,17.5,19.8,26.7}
-//    
-      genericScan(testArray, sizeof(testArray)/sizeof(double),sizeof(double));
-      copy(testArray, testArray + 6, ostream_iterator<double>(cout, " "));
-//    
+    
+    //double testArray[] = {3.2,5.4,1.2,7.7,2.3,6.9};
+    //answer: {3.2,8.6,9.8,17.5,19.8,26.7}
+    
+    double time = 0;
+    
+    if (argc < 2) {
+        cerr << "Error. Please input the length of an array to be scanned." << endl;
+        return 1;
+    }
+    
+    int arraySize = atoi(argv[1]);
+    size_t elementSize;
+    
+    if (argc > 2) {
+        
+        elementSize = sizeof(threeDimVec);
+        
+        vector<threeDimVec> Array(arraySize);
+        for (int i = 0; i < arraySize; i++) {
+            Array[i] = randThreeDimVec();
+        }
+        
+        vector<threeDimVec> ArrayForSeq = Array;
+        
+        genericScan(&Array[0],arraySize,elementSize);
+        
+        seqScan(&ArrayForSeq[0],arraySize,elementSize);
+        
+        if (checkScanThreeDimVec(Array,ArrayForSeq))
+        {
+            cout << "3D Arrays are equal! Good job! :)\n" << endl;
+        }
+        else
+        {
+            cout << "3D Arrays are not equal... :( Oh no!\n" << endl;
+        }
+        
+    } else {
+        
+        elementSize = sizeof(double);
+        
+        vector<double> Array(arraySize);
+        for (int i = 0;i < arraySize; i++){
+            Array[i] = ((double)rand())/RAND_MAX;
+        }
+        
+        vector<double> ArrayForSeq = Array;
+        
+        genericScan(&Array[0],arraySize,elementSize);
+        
+        seqScan(&ArrayForSeq[0],arraySize,elementSize);
+        
+        if (checkScanDouble(Array,ArrayForSeq))
+        {
+            cout << "1D Arrays are equal! Good job! :)\n" << endl;
+        }
+        else
+        {
+            cout << "1D Arrays are not equal... :( Oh no!\n" << endl;
+        }
+        
+    }
 }
