@@ -13,6 +13,7 @@
 
 using namespace std;
 void seqScan(void*,size_t,size_t);
+double addDouble(const void*, const void*);
 
 //three dimensional percision vector
 typedef struct _threeDimVec {
@@ -22,53 +23,66 @@ typedef struct _threeDimVec {
 } threeDimVec;
 
 threeDimVec addThreeDimVec(const void*,const void*);
-double addDouble(const void*, const void*);
 
 //parallel scan
 void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     
     int processes = omp_get_num_threads();
+    
     if (arraySize <= processes) {
         seqScan(arrayBase,arraySize,elementSize);
         return;
     }
+    
     char *newArray = new char[processes*elementSize];
     
-    //up sweep
+//up sweep
 #pragma omp parallel
     {
         int threadID = omp_get_thread_num();
+        
         int start = (threadID * arraySize)/processes;
         int end = ((threadID+1)*arraySize)/processes;
         
         char* arrayBaseChar = (char*)arrayBase;
         
-        seqScan(arrayBaseChar + start*elementSize, end,elementSize);
-        memcpy(newArray + threadID,arrayBaseChar+end, elementSize);
+        seqScan(arrayBaseChar+start*elementSize,end,elementSize);
+        
+        memcpy(newArray+threadID,arrayBaseChar+(end-1)*elementSize,elementSize);
+        
         genericScan(newArray,threadID,elementSize);
     }
     
-    //down sweep
+//down sweep
 #pragma omp parallel
     {
-        int threadID = (omp_get_thread_num())-1; //can I do this?
-        char* arrayBaseChar = (char*)arrayBase;
-        int start = ((threadID+1)*arraySize)/processes;;
-        int end = ((threadID+2)*arraySize)/processes;
-        for (int i = start; i < end; i++) {
-            if(elementSize == sizeof(threeDimVec)){
-                *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
-            } else {
-                *((double*)(arrayBaseChar+i*elementSize)) = addDouble(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
+        int threadID = omp_get_thread_num();
+        
+        if (threadID != 0){
+            char* arrayBaseChar = (char*)arrayBase;
+            
+            int start = ((threadID)*arraySize)/processes;
+            int end = ((threadID+1)*arraySize)/processes;
+            
+            for (int i = start; i < end; i++) {
+                if(elementSize == sizeof(threeDimVec)){
+                    *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
+                } else {
+                    *((double*)(arrayBaseChar+i*elementSize)) = addDouble(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
+                }
             }
         }
+        
     }
     
+    delete [] newArray;
 }
 
 //sequential scan
 void seqScan(void* arrayBase, size_t arraySize,size_t elementSize){
+    
     char* arrayBaseChar = (char*)arrayBase;
+    
     for (int i = 1; i < arraySize; i++) {
         if(elementSize == sizeof(threeDimVec)){
             *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
