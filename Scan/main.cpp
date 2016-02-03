@@ -139,7 +139,7 @@ bool checkScanDouble(const vector<double>& vector1, const vector<double>& vector
     
     for (int i = 0; i < vector1.size(); ++i)
     {
-        if (fabs(vector1[i] - vector2[i]) > 0.0000001)
+        if (fabs(vector1[i] - vector2[i]) > 0.001)
             return false;
     }
     return true;
@@ -152,11 +152,11 @@ bool checkScanThreeDimVec(const vector<threeDimVec>& vector1, const vector<three
     
     for (int i = 0; i < vector1.size(); ++i)
     {
-        if (fabs(vector1[i].x - vector2[i].x) > 0.0000001)
+        if (fabs(vector1[i].x - vector2[i].x) > 0.001)
             return false;
-        if (fabs(vector1[i].y - vector2[i].y) > 0.0000001)
+        if (fabs(vector1[i].y - vector2[i].y) > 0.001)
             return false;
-        if (fabs(vector1[i].z - vector2[i].z) > 0.0000001)
+        if (fabs(vector1[i].z - vector2[i].z) > 0.001)
             return false;
     }
     return true;
@@ -164,9 +164,6 @@ bool checkScanThreeDimVec(const vector<threeDimVec>& vector1, const vector<three
 
 //MAIN FUNCTION
 int main(int argc, char* argv[]){
-    
-    //double testArray[] = {3.2,5.4,1.2,7.7,2.3,6.9};
-    //answer: {3.2,8.6,9.8,17.5,19.8,26.7}
     
     double time = 0;
     
@@ -189,17 +186,22 @@ int main(int argc, char* argv[]){
         
         vector<threeDimVec> ArrayForSeq = Array;
         
+        clock_t startTime = clock();
         genericScan(&Array[0],arraySize,elementSize);
+        clock_t endTime = clock();
+        time = double(endTime - startTime)/(CLOCKS_PER_SEC);
         
         seqScan(&ArrayForSeq[0],arraySize,elementSize);
         
         if (checkScanThreeDimVec(Array,ArrayForSeq))
         {
-            cout << "3D Arrays are equal! Good job! :)\n" << endl;
+            cout << "3D Arrays are equal! Good job! :)" << endl;
+            cout << "Time to complete: " << time << " seconds." << endl;
         }
         else
         {
-            cout << "3D Arrays are not equal... :( Oh no!\n" << endl;
+            cout << "3D Arrays are not equal... :( Oh no!" << endl;
+            cout << "Time to complete: " << time << " seconds." << endl;
         }
         
     } else {
@@ -213,17 +215,22 @@ int main(int argc, char* argv[]){
         
         vector<double> ArrayForSeq = Array;
         
+        clock_t startTime = clock();
         genericScan(&Array[0],arraySize,elementSize);
+        clock_t endTime = clock();
+        time = double(endTime - startTime)/(CLOCKS_PER_SEC);
         
         seqScan(&ArrayForSeq[0],arraySize,elementSize);
         
         if (checkScanDouble(Array,ArrayForSeq))
         {
-            cout << "1D Arrays are equal! Good job! :)\n" << endl;
+            cout << "1D Arrays are equal! Good job! :)" << endl;
+            cout << "Time to complete: " << time << " seconds." << endl;
         }
         else
         {
-            cout << "1D Arrays are not equal... :( Oh no!\n" << endl;
+            cout << "1D Arrays are not equal... :( Oh no!" << endl;
+            cout << "Time to complete: " << time << " seconds." << endl;
         }
         
     }
