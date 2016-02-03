@@ -82,10 +82,10 @@ threeDimVec randThreeDimVec(){
 threeDimVec addThreeDimVec(const void* a, const void* b){
     threeDimVec vec1 = *(threeDimVec *)a;
     threeDimVec vec2 = *(threeDimVec *)b;
-    threeDimVec *addedVec = new threeDimVec[3];
-    addedVec[1] = vec1.x + vec2.x;
-    addedVec[2] = vec1.y + vec2.y;
-    addedVec[3] = vec1.z + vec2.z;
+    threeDimVec addedVec;
+    addedVec.x = vec1.x + vec2.x;
+    addedVec.y = vec1.y + vec2.y;
+    addedVec.z = vec1.z + vec2.z;
     
     return addedVec;
 }
