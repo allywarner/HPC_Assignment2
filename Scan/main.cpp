@@ -30,6 +30,7 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     int processes = omp_get_num_threads();
     if (arraySize <= processes) {
         seqScan(arrayBase,arraySize,elementSize);
+        return;
     }
     char *newArray = new char[processes*elementSize];
     
@@ -37,7 +38,7 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
 #pragma omp parallel
     {
         int threadID = omp_get_thread_num();
-        int start = (threadID * arraySize)/(processes-1);
+        int start = (threadID * arraySize)/processes;
         int end = ((threadID+1)*arraySize)/processes;
         
         char* arrayBaseChar = (char*)arrayBase;
@@ -50,11 +51,10 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     //down sweep
 #pragma omp parallel
     {
-        int threadID = omp_get_thread_num();
+        int threadID = (omp_get_thread_num())-1; //can I do this?
         char* arrayBaseChar = (char*)arrayBase;
-        //not sure if this is right... don't want to double add
-        int start = (threadID * arraySize)/(processes-1);
-        int end = ((threadID+1)*arraySize)/processes;
+        int start = ((threadID+1)*arraySize)/processes;;
+        int end = ((threadID+2)*arraySize)/processes;
         for (int i = start; i < end; i++) {
             if(elementSize == sizeof(threeDimVec)){
                 *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
@@ -69,7 +69,7 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
 //sequential scan
 void seqScan(void* arrayBase, size_t arraySize,size_t elementSize){
     char* arrayBaseChar = (char*)arrayBase;
-    for (int i = 1; i < arraySize - 1; i++) {
+    for (int i = 1; i < arraySize; i++) {
         if(elementSize == sizeof(threeDimVec)){
             *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
         } else {
