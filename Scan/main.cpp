@@ -10,13 +10,14 @@
 #include <stdlib.h>
 
 using namespace std;
+void seqScan(void*,size_t,size_t);
 
 //parallel scan
 void genericScan(void* arrayBase, size_t arraySize, size_t elementSize, void (*oper)(void *x1, void *x2)){
     
-    processes = omp_get_num_threads();
+    int processes = omp_get_num_threads();
     if (arraySize <= processes) {
-        seqScan(arrayBase,arraySize)
+        seqScan(arrayBase,arraySize,elementSize);
     }
 
 //up sweep
@@ -26,11 +27,11 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize, void (*o
         int *newArray = new int[processes];
         int start = (threadID * arraySize)/(processes-1);
         int end = ((threadID+1)*arraySize)/processes;
-        seqScan(arrayBase + start, end);
+        seqScan(arrayBase + start*elementSize, end);
         newArray[threadID] = arrayBase(end);
     }
     
-    genericScan(newArray,threadID);
+    genericScan(newArray,threadID,elementSize);
     
 //down sweep
 #pragma omp parallel
@@ -43,7 +44,7 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize, void (*o
 }
 
 //sequential scan
-void seqScan(void* arrayBase, size_t arraySize){
+void seqScan(void* arrayBase, size_t arraySize,size_t elementSize){
     for (int i = 1; i < arraySize - 1; i++) {
         arrayBase[i] = arrayBase[i] + arrayBase[i-1];
     }
