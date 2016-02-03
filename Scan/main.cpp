@@ -69,7 +69,7 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
 void seqScan(void* arrayBase, size_t arraySize,size_t elementSize){
     char* arrayBaseChar = (char*)arrayBase;
     for (int i = 1; i < arraySize - 1; i++) {
-        if(elementSize == threeDimVec){
+        if(elementSize == sizeof(threeDimVec)){
             *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
         } else {
             *((double*)(arrayBaseChar+i*elementSie)) = addDouble(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
