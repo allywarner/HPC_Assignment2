@@ -27,7 +27,10 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize, void (*o
         int *newArray = new int[processes];
         int start = (threadID * arraySize)/(processes-1);
         int end = ((threadID+1)*arraySize)/processes;
-        seqScan(arrayBase + start*elementSize, end);
+        
+        char* arrayBaseChar = (char*)arrayBase;
+        
+        seqScan(arrayBaseChar + start*elementSize, end);
         newArray[threadID] = arrayBase(end);
     }
     
