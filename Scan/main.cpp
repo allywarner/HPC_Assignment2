@@ -21,6 +21,7 @@ typedef struct _threeDimVec {
 } threeDimVec;
 
 threeDimVec addThreeDimVec(const void*,const void*);
+double addDouble(const void*, const void*);
 
 //parallel scan
 void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
@@ -57,7 +58,7 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
             if(elementSize == sizeof(threeDimVec)){
                 *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
             } else {
-                arrayBaseChar+i*elementSize = arrayBaseChar+i*elementSize + newArray+(threadID-1)*elementSize;
+                *((double*)(arrayBaseChar+i*elementSize)) = addDouble(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
             }
         }
     }
@@ -71,7 +72,7 @@ void seqScan(void* arrayBase, size_t arraySize,size_t elementSize){
         if(elementSize == threeDimVec){
             *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
         } else {
-            arrayBase[i] = arrayBase[i] + arrayBase[i-1];
+            *((double*)(arrayBaseChar+i*elementSie)) = addDouble(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
         }
     }
 }
@@ -93,6 +94,15 @@ threeDimVec addThreeDimVec(const void* a, const void* b){
     addedVec.z = vec1.z + vec2.z;
     
     return addedVec;
+}
+
+//double one dimensional vector addition
+double addDouble(const void* a, const void* b){
+    double a = *(double *)a;
+    double b = *(double *)b;
+    double addedDouble = a + b;
+    
+    return addedDouble;
 }
 
 int main(int argc, char* argv[]){
