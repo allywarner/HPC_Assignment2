@@ -20,7 +20,7 @@ typedef struct _threeDimVec {
 } threeDimVec;
 
 //parallel scan
-void genericScan(void* arrayBase, size_t arraySize, size_t elementSize, void (*oper)(void *x1, void *x2)){
+void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     
     int processes = omp_get_num_threads();
     if (arraySize <= processes) {
@@ -37,8 +37,8 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize, void (*o
         
         char* arrayBaseChar = (char*)arrayBase;
         
-        seqScan(arrayBaseChar + start*elementSize, end);
-        newArray[threadID] = arrayBase(end);
+        seqScan(arrayBaseChar + start*elementSize, end,elementSize);
+        newArray[threadID] = arrayBase[end];
     }
     
     genericScan(newArray,threadID,elementSize);
