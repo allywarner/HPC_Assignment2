@@ -26,8 +26,8 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize, void (*o
     if (arraySize <= processes) {
         seqScan(arrayBase,arraySize,elementSize);
     }
-
-//up sweep
+    
+    //up sweep
 #pragma omp parallel
     {
         int threadID = omp_get_thread_num();
@@ -43,33 +43,39 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize, void (*o
     
     genericScan(newArray,threadID,elementSize);
     
-//down sweep
+    //down sweep
 #pragma omp parallel
     {
         for (int i = start; i < end; i++) {
             if(elementSize == threeDimVec){
-                
+                arrayBase[i] = addThreeDimVec(arrayBase[i],NewArray[threadID-1]);
             } else {
-               arrayBase[i] = arrayBase[i] + newArray[threadID -1];
+                arrayBase[i] = arrayBase[i] + newArray[threadID-1];
             }
         }
     }
-
+    
 }
 
 //sequential scan
 void seqScan(void* arrayBase, size_t arraySize,size_t elementSize){
     for (int i = 1; i < arraySize - 1; i++) {
-        arrayBase[i] = arrayBase[i] + arrayBase[i-1];
+        if(elementSize == threeDimVec){
+            arrayBase[i] = addThreeDimVec(arrayBase[i],NewArray[threadID-1]);
+        } else {
+            arrayBase[i] = arrayBase[i] + arrayBase[i-1];
+        }
     }
 }
 
+//create random three dimensional vectors
 threeDimVec randThreeDimVec(){
     double x = ((double)rand())/RAND_MAX;
     double y = ((double)rand())/RAND_MAX;
     double z = ((double)rand())/RAND_MAX;
 }
 
+//three dimensional vector addition
 threeDimVec addThreeDimVec(const void* a, const void* b){
     threeDimVec vec1 = *(threeDimVec *)a;
     threeDimVec vec2 = *(threeDimVec *)b;
@@ -80,5 +86,5 @@ threeDimVec addThreeDimVec(const void* a, const void* b){
 }
 
 int main(int argc, char* argv[]){
-
+    
 }
