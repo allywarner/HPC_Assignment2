@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <ctime>
+#include <cstring>
 
 using namespace std;
 size_t partition(void*,size_t,size_t,int(*)(const void*, const void*));
@@ -57,8 +58,8 @@ size_t partition(void* arrayBase,size_t arraySize, size_t elementSize, int(*comp
     }
     
     //seq scan
-    for (int = 1; i < arraySize; i++) {
-        index[i] = index[i] + indexChar[i-1];
+    for (int i = 1; i < arraySize; i++) {
+        index[i] = index[i] + index[i-1];
     }
 
 #pragma omp parallel for
