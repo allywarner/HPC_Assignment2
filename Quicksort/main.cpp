@@ -56,8 +56,10 @@ size_t partition(void* arrayBase,size_t arraySize, size_t elementSize, int(*comp
            index[j] = 0;
     }
     
-    //try to use own scan, if not, write sequential scan
-    scan(index);
+    //seq scan
+    for (int = 1; i < arraySize; i++) {
+        index[i] = index[i] + indexChar[i-1];
+    }
 
 #pragma omp parallel for
     for(int j = 0; j < arraySize-1;j++){
