@@ -1,7 +1,7 @@
 //Ally Warner - u0680103
 //Assignment 2
 //High Performance Computing - CS 6230
-//Due: February 3, 2015
+//Due: February 7, 2015
 //Parallel scan
 
 #include <iostream>
@@ -19,6 +19,7 @@
 using namespace std;
 void seqScan(void*,size_t,size_t);
 double addDouble(const void*, const void*);
+double addInt(const void*, const void*);
 
 //three dimensional percision vector
 struct threeDimVec {
@@ -87,6 +88,8 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
             for (int i = start; i < end; i++) {
                 if(elementSize == sizeof(threeDimVec)){
                     *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
+                } if(elementSize ==sizeof(int)){
+                    *((int*)(arrayBaseChar+i*elementSize)) = addInt(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
                 } else {
                     *((double*)(arrayBaseChar+i*elementSize)) = addDouble(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
                 }
@@ -109,6 +112,8 @@ void seqScan(void* arrayBase, size_t arraySize,size_t elementSize){
     for (int i = 1; i < arraySize; i++) {
         if(elementSize == sizeof(threeDimVec)){
             *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
+        } if(elementSize == sizeof(int)) {
+            *((int*)(arrayBaseChar+i*elementSize)) = addInt(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
         } else {
             *((double*)(arrayBaseChar+i*elementSize)) = addDouble(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
         }
@@ -149,6 +154,17 @@ double addDouble(const void* a, const void* b){
     return addedDouble;
 }
 
+//int one dimensional vector addition
+//Inputs: two 1D arrays
+//Outputs: added 1D arrays
+double addInt(const void* a, const void* b){
+    int i1 = *(int *)a;
+    int i2 = *(int *)b;
+    int addedInt = i1 + i2;
+    
+    return addedInt;
+}
+
 //checking if 1D vectors are equal
 //Inputs: two 1D VECTORS
 bool checkScanDouble(const vector<double>& vector1, const vector<double>& vector2)
@@ -163,6 +179,22 @@ bool checkScanDouble(const vector<double>& vector1, const vector<double>& vector
     }
     return true;
 }
+
+//checking if 1D vectors are equal -- ints
+//Inputs: two 1D VECTORS
+bool checkScanInt(const vector<int>& vector1, const vector<int>& vector2)
+{
+    if (vector1.size() != vector2.size())
+        return false;
+    
+    for (int i = 0; i < vector1.size(); ++i)
+    {
+        if (fabs(vector1[i] - vector2[i]) > 0.001)
+            return false;
+    }
+    return true;
+}
+
 
 //checking if 3D vectors are equal
 //Inputs: two 3D VECTORS
@@ -199,31 +231,65 @@ int main(int argc, char* argv[]){
     
     if (argc > 2) {
         
-        elementSize = sizeof(threeDimVec);
+        string arrayType = argv[3];
         
-        vector<threeDimVec> Array(arraySize);
-        for (int i = 0; i < arraySize; i++) {
-            Array[i] = randThreeDimVec();
-        }
-        
-        vector<threeDimVec> ArrayForSeq = Array;
-        
-        clock_t startTime = clock();
-        genericScan(&Array[0],arraySize,elementSize);
-        clock_t endTime = clock();
-        time = double(endTime - startTime)/(CLOCKS_PER_SEC);
-        
-        seqScan(&ArrayForSeq[0],arraySize,elementSize);
-        
-        if (checkScanThreeDimVec(Array,ArrayForSeq))
-        {
-            cout << "3D Arrays are equal! Good job! :)" << endl;
-            cout << "Time to complete: " << time << " seconds." << endl;
-        }
-        else
-        {
-            cout << "3D Arrays are not equal... :( Oh no!" << endl;
-            cout << "Time to complete: " << time << " seconds." << endl;
+        if(arrayType.compare("threeDimVec") == 0) {
+            
+            elementSize = sizeof(threeDimVec);
+            
+            vector<threeDimVec> Array(arraySize);
+            for (int i = 0; i < arraySize; i++) {
+                Array[i] = randThreeDimVec();
+            }
+            
+            vector<threeDimVec> ArrayForSeq = Array;
+            
+            clock_t startTime = clock();
+            genericScan(&Array[0],arraySize,elementSize);
+            clock_t endTime = clock();
+            time = double(endTime - startTime)/(CLOCKS_PER_SEC);
+            
+            seqScan(&ArrayForSeq[0],arraySize,elementSize);
+            
+            if (checkScanThreeDimVec(Array,ArrayForSeq))
+            {
+                cout << "3D Arrays are equal! Good job! :)" << endl;
+                cout << "Time to complete: " << time << " seconds." << endl;
+            }
+            else
+            {
+                cout << "3D Arrays are not equal... :( Oh no!" << endl;
+                cout << "Time to complete: " << time << " seconds." << endl;
+            }
+        } else if (arrayType.compare("int") == 0) {
+            
+            elementSize = sizeof(int);
+            
+            vector<int> Array(arraySize);
+            for (int i = 0;i < arraySize; i++){
+                Array[i] = rand();
+            }
+            
+            vector<int> ArrayForSeq = Array;
+            
+            clock_t startTime = clock();
+            genericScan(&Array[0],arraySize,elementSize);
+            clock_t endTime = clock();
+            time = double(endTime - startTime)/(CLOCKS_PER_SEC);
+            
+            seqScan(&ArrayForSeq[0],arraySize,elementSize);
+            
+            if (checkScanInt(Array,ArrayForSeq))
+            {
+                cout << "1D Int Arrays are equal! Good job! :)" << endl;
+                cout << "Time to complete: " << time << " seconds." << endl;
+            }
+            else
+            {
+                cout << "1D Int Arrays are not equal... :( Oh no!" << endl;
+                cout << "Time to complete: " << time << " seconds." << endl;
+            }
+            
         }
         
     } else {
