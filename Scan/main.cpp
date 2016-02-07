@@ -49,7 +49,7 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
     
     char *newArray = new char[processes*elementSize];
     
-//up sweep in parallel
+    //up sweep in parallel
 #pragma omp parallel
     {
         int threadID = omp_get_thread_num();
@@ -66,12 +66,12 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
         //moving the largest values of each piece into a new array
         memcpy(newArray+(threadID*elementSize),arrayBaseChar+(end-1)*elementSize,elementSize);
     }
-
-//recursive call for scan on the new array, we want to wait until newArray is full (barrier)
+    
+    //recursive call for scan on the new array, we want to wait until newArray is full (barrier)
 #pragma omp barrier
     genericScan(newArray,processes,elementSize);
     
-//down sweep in parallel
+    //down sweep in parallel
 #pragma omp parallel
     {
         int threadID = omp_get_thread_num();
@@ -88,7 +88,7 @@ void genericScan(void* arrayBase, size_t arraySize, size_t elementSize){
             for (int i = start; i < end; i++) {
                 if(elementSize == sizeof(threeDimVec)){
                     *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
-                } if(elementSize ==sizeof(int)){
+                } else if(elementSize == sizeof(int)){
                     *((int*)(arrayBaseChar+i*elementSize)) = addInt(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
                 } else {
                     *((double*)(arrayBaseChar+i*elementSize)) = addDouble(arrayBaseChar+i*elementSize,newArray+(threadID-1)*elementSize);
@@ -112,7 +112,7 @@ void seqScan(void* arrayBase, size_t arraySize,size_t elementSize){
     for (int i = 1; i < arraySize; i++) {
         if(elementSize == sizeof(threeDimVec)){
             *((threeDimVec*)(arrayBaseChar + i*elementSize)) = addThreeDimVec(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
-        } if(elementSize == sizeof(int)) {
+        } else if(elementSize == sizeof(int)) {
             *((int*)(arrayBaseChar+i*elementSize)) = addInt(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
         } else {
             *((double*)(arrayBaseChar+i*elementSize)) = addDouble(arrayBaseChar+i*elementSize,arrayBaseChar+(i-1)*elementSize);
@@ -261,7 +261,9 @@ int main(int argc, char* argv[]){
                 cout << "3D Arrays are not equal... :( Oh no!" << endl;
                 cout << "Time to complete: " << time << " seconds." << endl;
             }
-        } else if (arrayType.compare("int") == 0) {
+        }
+        
+        else if (arrayType.compare("int") == 0) {
             
             elementSize = sizeof(int);
             
