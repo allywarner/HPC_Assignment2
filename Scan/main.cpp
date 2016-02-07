@@ -189,7 +189,7 @@ bool checkScanInt(const vector<int>& vector1, const vector<int>& vector2)
     
     for (int i = 0; i < vector1.size(); ++i)
     {
-        if (fabs(vector1[i] - vector2[i]) > 0.001)
+        if (vector1[i] != vector2[i])
             return false;
     }
     return true;
