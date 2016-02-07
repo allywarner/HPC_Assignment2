@@ -231,7 +231,7 @@ int main(int argc, char* argv[]){
     
     if (argc > 2) {
         
-        string arrayType = argv[3];
+        string arrayType = argv[2];
         
         if(arrayType.compare("threeDimVec") == 0) {
             
