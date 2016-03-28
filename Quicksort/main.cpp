@@ -53,8 +53,9 @@ size_t partition(void* arrayBase,size_t arraySize, size_t elementSize, int(*comp
     for(int j = 0; j < arraySize-1;j++){
         if(compar(arrayBaseChar+(j*elementSize),pivot) <= 0){
             index[j] = 1;
-       } else
-           index[j] = 0;
+        } else {
+            index[j] = 0;
+        }
     }
     
     //seq scan
